@@ -1,40 +1,83 @@
-var vm = new Vue({
-    el: '#app',
-    data: {
-        ubikeStops: []
-    },
-    filters: {
-      timeFormat(t){
-
-        var date = [], time = [];
-
-        date.push(t.substr(0, 4));
-        date.push(t.substr(4, 2));
-        date.push(t.substr(6, 2));
-        time.push(t.substr(8, 2));
-        time.push(t.substr(10, 2));
-        time.push(t.substr(12, 2));
-
-        return date.join("/") + ' ' + time.join(":");
+const app = Vue.createApp({
+  data() {
+      return {
+          uBikeStops: [],
+          filterStops: [],
+          pageSize: 10,
+          pageIndex: 0,
+          totalPages: 0,
+          pageRange: 5,
+          pageNumbers: [],
+          bempSortClass: '',
+          totSortClass: '',
+          isBempAsc: true,
+          isTotAsc: true,
+          searchName: '',
       }
-    },
-    created() {
+  },
+  created() {
+      fetch('https://tcgbusfs.blob.core.windows.net/blobyoubike/YouBikeTP.gz')
+          .then(res => res.json())
+          .then(json => {
+              const stops = Object.keys(json.retVal).map(key => json.retVal[key]);
+              this.filterStops = this.uBikeStops = stops;
+          });
+  },
+  watch: {
+      searchName() {
+          this.filterStops = this.uBikeStops.filter(stop => stop.sna.includes(this.searchName));
+      },
+      filterStops() {
+          this.totalPages = Math.ceil(this.filterStops.length / this.pageSize);
+          this.pageRange = this.totalPages < 5 ? this.totalPages : 5;
+          this.pageNumbers = Array(this.pageRange).fill().map((_, i) => i + 1);
+          this.gotoPage(1)
+      },
+      pageIndex() {
+          this.setPageNumber();
+      },
+      isBempAsc() {
+          this.totSortClass = 'fa-sort';
+          this.bempSortClass = this.isBempAsc ? 'fa-sort-asc' : 'fa-sort-desc';
+      },
+      isTotAsc() {
+          this.bempSortClass = 'fa-sort';
+          this.totSortClass = this.isTotAsc ? 'fa-sort-asc' : 'fa-sort-desc';
+      }
+  },
+  computed: {
+      paginationItems() {
+          const start = (this.pageIndex - 1) * this.pageSize;
 
-        // 欄位說明請參照:
-        // http://data.taipei/opendata/datalist/datasetMeta?oid=8ef1626a-892a-4218-8344-f7ac46e1aa48
+          return this.filterStops.slice(start, start + this.pageSize);
+      },
+  },
+  methods: {
+      timeFormat(val) {
+          const pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
 
-        // sno：站點代號、 sna：場站名稱(中文)、 tot：場站總停車格、
-        // sbi：場站目前車輛數量、 sarea：場站區域(中文)、 mday：資料更新時間、
-        // lat：緯度、 lng：經度、 ar：地(中文)、 sareaen：場站區域(英文)、
-        // snaen：場站名稱(英文)、 aren：地址(英文)、 bemp：空位數量、 act：全站禁用狀態
+          return val.replace(pattern, '$1/$2/$3 $4:$5:$6')
+      },
+      sortBikeStops(column, isAsc) {
+          this.filterStops.sort((stop1, stop2) =>
+              isAsc ? stop1[column] - stop2[column] : stop2[column] - stop1[column])
+      },
+      gotoPage(index) {
+          if (index > 0 && index <= this.totalPages) {
+              this.pageIndex = index;
+          }
+      },
+      setPageNumber() {
+          const start = {
+              [this.pageNumbers[this.pageRange - 1]]: this.pageNumbers[0] + 1,
+              [this.pageNumbers[0]]: this.pageNumbers[0] - 1,
+              [1]: 1,
+              [this.totalPages]: this.totalPages - this.pageRange + 1
+          }[this.pageIndex];
 
-        axios.get('https://tcgbusfs.blob.core.windows.net/blobyoubike/YouBikeTP.gz')
-            .then(res => {
-
-                // 將 json 轉陣列後存入 this.ubikeStops
-                this.ubikeStops = Object.keys(res.data.retVal).map(key => res.data.retVal[key]);
-
-            });
-
-    }
-});
+          if (start) {
+              this.pageNumbers = this.pageNumbers.map((_, i) => start + i);
+          }
+      }
+  }
+}).mount('#app');
