@@ -3,7 +3,9 @@ const app = Vue.createApp({
         return {
             uBikeStops: [],
             pageSize: 10,
-            pageIndex: 0,
+            pageIndex: 1,
+            totalPages: 0,
+            pageRange: 5,
             pageNumbers: [],
             searchName: '',
             currentSort: '',
@@ -16,10 +18,12 @@ const app = Vue.createApp({
             .then(json => {
                 const stops = Object.keys(json.retVal).map(key => json.retVal[key]);
                 this.uBikeStops = stops;
-                this.pageIndex = 1;
             });
     },
     watch: {
+        searchName() {
+            this.gotoPage(1);
+        },
         pageIndex() {
             this.setPageNumbers();
         }
@@ -36,17 +40,13 @@ const app = Vue.createApp({
         totSortClass() {
             return this.currentSort === 'tot' ? this.isSortDesc ? 'fa-sort-desc' : 'fa-sort-asc' : 'fa-sort';
         },
-        totalPages() {
-            return Math.ceil(this.filterUBikeStops.length / this.pageSize);
-        },
-        pageRange() {
-            let range = this.totalPages < 5 ? this.totalPages : 5;
-            this.pageNumbers = Array(range).fill().map((_, i) => i + 1);
-
-            return range;
-        },
         filterUBikeStops() {
-            return this.uBikeStops.filter(stop => stop.sna.includes(this.searchName));
+            const stops = this.uBikeStops.filter(stop => stop.sna.includes(this.searchName));
+            this.totalPages = Math.ceil(stops.length / this.pageSize);
+            this.pageRange = this.totalPages < 5 ? this.totalPages : 5;
+            this.pageNumbers = Array(this.pageRange).fill().map((_, i) => i + 1);
+
+            return stops;
         },
         sortedUBikeStops() {
             const column = this.currentSort;
