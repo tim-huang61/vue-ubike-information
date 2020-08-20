@@ -1,28 +1,22 @@
 <template>
+  <h1>YouBike 臺北市公共自行車即時資訊</h1>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <UbikeMainPage/>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import UbikeMainPage from './components/UbikeMainPage.vue'
 
 export default {
-  name: 'App',
   components: {
-    HelloWorld
+    UbikeMainPage
   }
 }
 </script>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+<style scoped>
+body {
+  padding: 1em;
 }
 </style>
