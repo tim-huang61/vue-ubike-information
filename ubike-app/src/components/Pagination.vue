@@ -1,7 +1,7 @@
 <template>
   <nav>
     <ul class="pagination justify-content-center">
-      <li class="page-item" @click.prevent="gotoFirstPage()">
+      <li class="page-item" @click.prevent="pageIndex = 1">
         <a class="page-link" href="#">&laquo;</a>
       </li>
       <li class="page-item" @click.prevent="gotoPage(pageIndex - 1)">
@@ -14,7 +14,7 @@
       <li class="page-item" @click.prevent="gotoPage(pageIndex + 1)">
         <a class="page-link" href="#">›</a>
       </li>
-      <li class="page-item" @click.prevent="gotoLastPage()">
+      <li class="page-item" @click.prevent="pageIndex = totalPages">
         <a class="page-link" href="#">&raquo;</a>
       </li>
     </ul>
@@ -31,17 +31,23 @@ export default {
     return {
       pageNumbers: [],
       paginationRange: 0,
-      pageIndex: this.currentPage
     }
   },
   watch: {
     totalPages() {
       this.paginationRange = this.totalPages < NORMAL_PAGES_RANGE ? this.totalPages : NORMAL_PAGES_RANGE;
       this.pageNumbers = Array(this.paginationRange).fill().map((_, i) => i + 1);
-    },
-    pageIndex(val) {
-      this.setPageNumbers();
-      this.$emit('update:currentPage', val);
+    }
+  },
+  computed: {
+    pageIndex: {
+      get() {
+        return this.currentPage;
+      },
+      set(val) {
+        this.setPageNumbers(val);
+        this.$emit('update:currentPage', val);
+      }
     }
   },
   methods: {
@@ -50,19 +56,13 @@ export default {
         this.pageIndex = num;
       }
     },
-    gotoFirstPage() {
-      this.pageIndex = 1;
-    },
-    gotoLastPage() {
-      this.pageIndex = this.totalPages;
-    },
-    setPageNumbers() {
+    setPageNumbers(index) {
       const start = {
         [this.pageNumbers[this.paginationRange - 1]]: this.pageNumbers[0] + 1,
         [this.pageNumbers[0]]: this.pageNumbers[0] - 1,
         [1]: 1,
         [this.totalPages]: this.totalPages - this.paginationRange + 1
-      }[this.pageIndex];
+      }[index];
       if (start) {
         this.pageNumbers = this.pageNumbers.map((_, i) => start + i);
       }

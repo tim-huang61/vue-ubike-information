@@ -34,7 +34,7 @@ export default {
   },
   watch: {
     searchName() {
-      this.$refs.pagination.gotoFirstPage();
+      this.currentPage = 1;
     }
   },
   computed: {
